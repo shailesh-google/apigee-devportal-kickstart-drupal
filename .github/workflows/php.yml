@@ -65,6 +65,10 @@ jobs:
     - name: "Allow plugins and dev dependencies"
       run: |
         cd drupal
+        # Fix for drupal/forum and drupal/history dependency conflict on Drupal versions where they are still in core.
+        [ -d core/modules/forum ] && composer config replace.drupal/forum "*"
+        [ -d core/modules/history ] && composer config replace.drupal/history "*"
+        [ -d core/modules/tour ] && composer config replace.drupal/tour "*"
         composer require "justinrainbow/json-schema:^6.5.1" --no-update
         composer config --no-plugins allow-plugins.composer/installers true
         composer config --no-plugins allow-plugins.drupal/core-composer-scaffold true
