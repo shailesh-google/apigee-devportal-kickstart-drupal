@@ -65,10 +65,6 @@ jobs:
     - name: "Allow plugins and dev dependencies"
       run: |
         cd drupal
-        # Fix for drupal/forum and drupal/history dependency conflict on Drupal versions where they are still in core.
-        [ -d core/modules/forum ] && composer config replace.drupal/forum "*"
-        [ -d core/modules/history ] && composer config replace.drupal/history "*"
-        [ -d core/modules/tour ] && composer config replace.drupal/tour "*"
         composer require "justinrainbow/json-schema:^6.5.1" --no-update
         composer config --no-plugins allow-plugins.composer/installers true
         composer config --no-plugins allow-plugins.drupal/core-composer-scaffold true
@@ -82,6 +78,10 @@ jobs:
         composer require wikimedia/composer-merge-plugin
         composer config --json extra.merge-plugin.require '["profiles/contrib/apigee_devportal_kickstart/composer.json"]'
         composer config platform.php ${{ matrix.php-version }}
+        if [[ "${{ matrix.drupal-core }}" == 10.* ]]; then
+          composer config replace.drupal/forum "*"
+          composer config replace.drupal/tour "*"
+        fi      
         composer update --with-all-dependencies
         composer require --dev phpspec/prophecy-phpunit:^2
 
