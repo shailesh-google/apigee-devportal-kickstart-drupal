@@ -78,10 +78,16 @@ jobs:
         composer require wikimedia/composer-merge-plugin
         composer config --json extra.merge-plugin.require '["profiles/contrib/apigee_devportal_kickstart/composer.json"]'
         composer config platform.php ${{ matrix.php-version }}
+        
+        # --- CI FIX FOR DRUPAL 10 AND 11 MONOLITHIC REPOS ---
+        # Drupal 10 still has Forum and Tour in core.
         if [[ "${{ matrix.drupal-core }}" == 10.* ]]; then
           composer config replace.drupal/forum "*"
           composer config replace.drupal/tour "*"
         fi      
+        # Drupal 10 and 11 both still have History in core.
+        # We must prevent the contrib Forum module from trying to download the contrib History module.
+        composer config replace.drupal/history "*"
         composer update --with-all-dependencies
         composer require --dev phpspec/prophecy-phpunit:^2
 
