@@ -29,8 +29,8 @@
     "drupal/rdf": "^3.0@beta",
     "drupal/hal": "^2.0.4",
     "drupal/color": "2.x-dev@dev",
-    "drupal/tour": "^2.0 || ^10 || ^11",
-    "drupal/forum": "^1.0 || ^10 || ^11"
+    "drupal/tour": "^2.0 || ^10@dev || ^11@dev",
+    "drupal/forum": "^1.0 || ^10@dev || ^11@dev"
   },
   "require-dev": {
     "drupal/core-dev": "^10.5 || ^11.2",
