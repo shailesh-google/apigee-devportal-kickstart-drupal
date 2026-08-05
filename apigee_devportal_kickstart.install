@@ -238,6 +238,24 @@ function apigee_devportal_kickstart_finish() {
  */
 function apigee_devportal_kickstart_install() {
 
+// Drupal 11.3+ moved the body field to a new dedicated core module.
+  if (\version_compare(\Drupal::VERSION, '11.3', '>=')) {
+    // Enable the new core module dynamically.
+    \Drupal::service('module_installer')->install(['node_storage_body_field']);
+  }
+  else {
+    // For Drupal 11.2 and below, if the field doesn't exist, create it manually
+    // the old way (using text_with_summary).
+    $field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'body');
+    if (!$field_storage) {
+      \Drupal\field\Entity\FieldStorageConfig::create([
+        'field_name' => 'body',
+        'entity_type' => 'node',
+        'type' => 'text_with_summary',
+      ])->save();
+    }
+  }
+
   // Get profile path.
   $src_path = \Drupal::service('extension.list.profile')->getPath('apigee_devportal_kickstart') . '/resources/files';
 
