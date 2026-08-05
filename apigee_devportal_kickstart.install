@@ -238,24 +238,6 @@ function apigee_devportal_kickstart_finish() {
  */
 function apigee_devportal_kickstart_install() {
 
-// Drupal 11.3+ moved the body field to a new dedicated core module.
-  if (\version_compare(\Drupal::VERSION, '11.3', '>=')) {
-    // Enable the new core module dynamically.
-    \Drupal::service('module_installer')->install(['node_storage_body_field']);
-  }
-  else {
-    // For Drupal 11.2 and below, if the field doesn't exist, create it manually
-    // the old way (using text_with_summary).
-    $field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'body');
-    if (!$field_storage) {
-      \Drupal\field\Entity\FieldStorageConfig::create([
-        'field_name' => 'body',
-        'entity_type' => 'node',
-        'type' => 'text_with_summary',
-      ])->save();
-    }
-  }
-
   // Get profile path.
   $src_path = \Drupal::service('extension.list.profile')->getPath('apigee_devportal_kickstart') . '/resources/files';
 
@@ -316,6 +298,29 @@ function apigee_devportal_kickstart_install() {
     'link' => ['uri' => 'internal:/forum'],
     'weight' => 3,
   ])->save();
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function apigee_devportal_kickstart_module_implements_alter(&$implementations, $hook) {
+  // The Forum module forcefully alters the node body field to 'text_long' 
+  // during node type creation in Drupal 11+. This crashes the installation 
+  // because Kickstart's configuration YAMLs rely on 'text_with_summary'.
+  // We temporarily disarm these specific Forum hooks during the install phase.
+  $hooks_to_suppress = [
+    'node_type_insert',
+    'field_config_presave',
+    'field_config_insert'
+  ];
+
+  if (in_array($hook, $hooks_to_suppress) && isset($implementations['forum'])) {
+    global $install_state;
+    // If $install_state is populated, the site is currently installing.
+    if (!empty($install_state)) {
+      unset($implementations['forum']);
+    }
+  }
 }
 
 /**
