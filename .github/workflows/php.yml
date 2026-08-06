@@ -69,7 +69,7 @@ jobs:
     - name: "Allow plugins and dev dependencies"
       run: |
         cd drupal
-        composer require "justinrainbow/json-schema:^6.5.1" --no-update
+        composer require "justinrainbow/json-schema:^6.5.1" --no-update --dev
         composer config --no-plugins allow-plugins.composer/installers true
         composer config --no-plugins allow-plugins.drupal/core-composer-scaffold true
         composer config --no-plugins allow-plugins.drupal/core-project-message true
@@ -82,6 +82,10 @@ jobs:
         composer require wikimedia/composer-merge-plugin
         composer config --json extra.merge-plugin.require '["profiles/contrib/apigee_devportal_kickstart/composer.json"]'
         composer config platform.php ${{ matrix.php-version }}
+        
+        # FIX: Strip core dependencies from the distribution's composer.json before merging
+        # This prevents the "drupal/core cannot coexist with drupal/drupal" error during CI.
+        jq 'del(.require["drupal/core"], .require["drupal/core-recommended"], .require["drupal/core-composer-scaffold"], .require["drupal/core-project-message"])' profiles/contrib/apigee_devportal_kickstart/composer.json > tmp.json && mv tmp.json profiles/contrib/apigee_devportal_kickstart/composer.json
         
         # Drupal 10 still has Forum and Tour in core.
         if [[ "${{ matrix.drupal-core }}" == 10.* ]]; then
