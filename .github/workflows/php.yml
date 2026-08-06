@@ -86,24 +86,14 @@ jobs:
         composer config --json extra.merge-plugin.require '["profiles/contrib/apigee_devportal_kickstart/composer.json"]'
         composer config platform.php ${{ matrix.php-version }}
         
-        # FIX: Tell the monolithic drupal/drupal repo that it replaces all core packages.
-        # This prevents deep dependencies (like apigee_edge) from triggering a Packagist 
-        # download of drupal/core that collides with the root repo.
-        jq '.replace += {
-          "drupal/core": "*",
-          "drupal/core-recommended": "*",
-          "drupal/core-composer-scaffold": "*",
-          "drupal/core-project-message": "*",
-          "drupal/core-dev": "*",
-          "drupal/history": "*"
-        }' composer.json > tmp.json && mv tmp.json composer.json
-        
-        # Drupal 10 still has Forum and Tour in core.
+        # FIX: For Drupal 10, remove modules from the Kickstart profile that are already in D10 core.
+        # This safely prevents Composer from downloading conflicting contrib versions without needing 
+        # to hack the root project's replace block.
         if [[ "${{ matrix.drupal-core }}" == 10.* ]]; then
-          jq '.replace += {"drupal/forum": "*", "drupal/tour": "*"}' composer.json > tmp.json && mv tmp.json composer.json
+          jq 'del(.require["drupal/forum"], .require["drupal/tour"], .require["drupal/history"])' profiles/contrib/apigee_devportal_kickstart/composer.json > tmp.json && mv tmp.json profiles/contrib/apigee_devportal_kickstart/composer.json
         fi
 
-        # Now run the massive update once all configurations are safely in place
+        # Now run the massive update completely clean
         composer update --with-all-dependencies
         composer require --dev phpspec/prophecy-phpunit:^2
 
